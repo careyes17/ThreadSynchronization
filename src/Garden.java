@@ -4,21 +4,22 @@ import java.util.concurrent.locks.ReentrantLock;
 
 class Garden {
   final Lock lock = new ReentrantLock();
-  final Condition ready  = lock.newCondition();
+  final Condition readyToDig  = lock.newCondition();
   final Condition dug = lock.newCondition();
   final Condition planted = lock.newCondition();
 
-  private int dugNum = 0;
-  private int plantedNum = 0;
-  private int filledNum = 0;
+  // number of completed actions
+  private int numDug = 0;
+  private int numPlanted = 0;
+  private int numFilled = 0;
 
 
   public void waitToDig() throws InterruptedException {
     lock.lock();
     try {
-      while (dugNum - filledNum == 4) {
+      while (numDug - numFilled == 5) { // while there are 5 unfilled holes
         System.out.println("Jordan is waiting to dig a hole.");
-        ready.await();
+        readyToDig.await(); // waiting for holes to be filled
       }
     } finally {
       lock.unlock();
@@ -28,9 +29,9 @@ class Garden {
   public void dig() throws InterruptedException {
     lock.lock();
     try {
-      dugNum++;
-      System.out.println("Jordan dug a hole.\t\t\t\t\t\t\t\t\t\t\t\t\t"+dugNum);
-      dug.signal();
+      numDug++; // increment the number of holes dug
+      System.out.println("Jordan dug a hole.\t\t\t\t\t\t\t\t\t\t\t\t\t"+ numDug);
+      dug.signal(); // signal to planter that a hole is ready to be planted
     } finally {
       lock.unlock();
     }
@@ -39,9 +40,9 @@ class Garden {
   public void waitToPlant() throws InterruptedException {
     lock.lock();
     try {
-      while (plantedNum == dugNum) {
+      while (numPlanted == numDug) { // while there are no holes to be planted
         System.out.println("Charles is waiting to plant a hole.");
-        dug.await();
+        dug.await(); // wait for holes to be dug
       }
     } finally {
       lock.unlock();
@@ -51,9 +52,9 @@ class Garden {
   public void plant() throws InterruptedException {
     lock.lock();
     try {
-      plantedNum++;
-      System.out.println("Charles planted a hole.\t\t\t\t\t\t\t"+plantedNum);
-      planted.signal();
+      numPlanted++; // increment number of holes planted
+      System.out.println("Charles planted a hole.\t\t\t\t\t\t\t"+ numPlanted);
+      planted.signal(); // signal hole filler that a hole has been planted
     } finally {
       lock.unlock();
     }
@@ -62,9 +63,9 @@ class Garden {
   public void waitToFill() throws InterruptedException {
     lock.lock();
     try {
-      while (plantedNum == filledNum) {
+      while (numPlanted == numFilled) { // while there aren't holes to be filled
         System.out.println("Tracy is waiting to fill a hole.");
-        planted.await();
+        planted.await(); // wait for a hole to be planted
       }
     } finally {
       lock.unlock();
@@ -74,12 +75,11 @@ class Garden {
   public void fill() throws InterruptedException {
     lock.lock();
     try {
-      filledNum++;
-      System.out.println("Tracy filled a hole.\t\t\t\t\t\t\t\t\t\t"+filledNum);
-      ready.signal();
+      numFilled++; // increments number of holes filled
+      System.out.println("Tracy filled a hole.\t\t\t\t\t\t\t\t\t\t"+ numFilled);
+      readyToDig.signal(); // signals the person who digs that another hole can be dug
     } finally {
       lock.unlock();
     }
   }
-
 }

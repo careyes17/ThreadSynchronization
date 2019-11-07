@@ -1,5 +1,6 @@
 import java.util.Random;
 
+// digs holes
 class Jordan implements Runnable {
 
   Garden garden;
@@ -13,8 +14,8 @@ class Jordan implements Runnable {
     try {
       Thread.sleep(rand.nextInt(1000)); // makes the execution more random
       for (int i = 0; i < 10; i++) {
-        garden.waitToDig();
-        garden.dig();
+        garden.waitToDig(); // waits to dig
+        garden.dig(); // if done waiting, digs
         Thread.sleep(rand.nextInt(100)); // digging
       }
     } catch (InterruptedException e) {
